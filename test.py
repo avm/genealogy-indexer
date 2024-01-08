@@ -42,43 +42,58 @@ class Spreadsheet:
         return self.sheet_metadata.get('properties', {}).get('title', '')
 
 
-def main():
-    sheets = Sheets(SERVICE_ACCOUNT_FILE)
-    writer = WhooshWriter()
+class Indexer:
+    def __init__(self, service_account_file):
+        self.sheets = Sheets(service_account_file)
+        self.writer = WhooshWriter()
 
-    for spreadsheet_id in [KATINO]:
-        document = sheets.get_document(spreadsheet_id)
-        locality = document.get_title()
+    def process_spreadsheet(self, spreadsheet_id: str) -> None:
+        document = self.sheets.get_document(spreadsheet_id)
         sheet_titles = document.get_sheet_titles()
         for title in sheet_titles:
-            print(f'processing sheet «{title}»')
-            rows = document.get_sheet_content(title)
-            if len(rows) < 2:
+            self.process_sheet(document, title)
+
+    def process_sheet(self, document, title):
+        print(f'processing sheet «{title}»')
+        rows = document.get_sheet_content(title)
+        if len(rows) < 2:
+            return
+
+        try:
+            base_column = rows[0].index('Фамилия')
+        except ValueError:
+            base_column = 5
+        name_column = base_column + 7
+        year_column = name_column + 3
+        print(f'detected: name column {name_column}, year column {year_column}')
+
+        locality = document.get_title()
+        for rowidx, row in enumerate(rows[1:]):
+            print('processing row:', row)
+            if (len(row) < year_column + 1):
+                print('no data')
                 continue
+            name = row[name_column]
+            if not name:
+                continue
+            year = row[year_column]
+            print('adding document:', name, year)
+            self.writer.add_document(sheet=title, row=rowidx+2, content=name,
+                                     locality=locality, birth_year=year)
 
-            try:
-                base_column = rows[0].index('Фамилия')
-            except ValueError:
-                base_column = 5
-            name_column = base_column + 7
-            year_column = name_column + 3
-            print(f'detected: name column {name_column}, year column {year_column}')
+    def done(self):
+        self.writer.close()
 
-            for rowidx, row in enumerate(rows[1:]):
-                print('processing row:', row)
-                if (len(row) < year_column + 1):
-                    print('no data')
-                    continue
-                name = row[name_column]
-                if not name:
-                    continue
-                year = row[year_column]
-                print('adding document:', name, year)
-                writer.add_document(sheet=title, row=rowidx+2, content=name, locality=locality, birth_year=year)
 
-    writer.close()
+def main():
+    idx = Indexer(SERVICE_ACCOUNT_FILE)
 
-    reader = WhooshReader(writer.index)
+    for spreadsheet_id in [KATINO]:
+        idx.process_spreadsheet(spreadsheet_id)
+
+    idx.done()
+
+    reader = WhooshReader(idx.writer.index)
     search_results = reader.search("Демид")
     for result in search_results:
         print(result)

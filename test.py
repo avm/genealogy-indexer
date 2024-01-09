@@ -85,16 +85,24 @@ class Indexer:
         self.writer.close()
 
 
+class Server:
+    def __init__(self, service_account_file):
+        idx = Indexer(SERVICE_ACCOUNT_FILE)
+
+        for spreadsheet_id in [KATINO]:
+            idx.process_spreadsheet(spreadsheet_id)
+
+        idx.done()
+
+        self.reader = WhooshReader(idx.writer.index)
+
+    def search(self, query: str):
+        return self.reader.search(query)
+
+
 def main():
-    idx = Indexer(SERVICE_ACCOUNT_FILE)
-
-    for spreadsheet_id in [KATINO]:
-        idx.process_spreadsheet(spreadsheet_id)
-
-    idx.done()
-
-    reader = WhooshReader(idx.writer.index)
-    search_results = reader.search("Демид")
+    server = Server(SERVICE_ACCOUNT_FILE)
+    search_results = server.search("Демид")
     for result in search_results:
         print(result)
 

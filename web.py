@@ -15,12 +15,14 @@ HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
     <title>Скопинский уезд</title>
 </head>
 <body>
     <form action="/search" method="get">
-        <input type="text" name="query" value="{{ query }}" placeholder="Enter search term">
+        <input type="text" name="query" style="width: 500px;"
+          value="{{ query }}" placeholder="Enter search term">
         <button type="submit">Search</button>
     </form>
     {% if results %}
@@ -36,4 +38,4 @@ HTML_TEMPLATE = '''
 
 if __name__ == '__main__':
     app.server = crawl.Server(crawl.SERVICE_ACCOUNT_FILE)
-    app.run(debug=True)
+    app.run()

@@ -1,10 +1,10 @@
-from whoosh.index import create_in
 from whoosh.fields import Schema, TEXT, NUMERIC, STORED
 from whoosh.filedb.filestore import RamStorage
 from whoosh.support.charset import charset_table_to_dict
 from whoosh.analysis import CharsetFilter, RegexTokenizer
 
 from whoosh.qparser import MultifieldParser
+
 
 class WhooshReader:
     def __init__(self, index):
@@ -54,4 +54,3 @@ class WhooshWriter:
     def close(self):
         self.writer.commit()
         self.index.close()
-

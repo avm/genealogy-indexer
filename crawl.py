@@ -23,11 +23,13 @@ class Sheets:
     def get_document(self, spreadsheet_id):
         return Spreadsheet(self.service, spreadsheet_id)
 
+
 class Spreadsheet:
     def __init__(self, service, spreadsheet_id: str):
         self.service = service
         self.spreadsheet_id = spreadsheet_id
-        self.sheet_metadata = self.service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        self.sheet_metadata = self.service.spreadsheets().get(
+            spreadsheetId=spreadsheet_id).execute()
 
     def get_sheet_titles(self) -> [str]:
         sheets = self.sheet_metadata.get('sheets', '')
